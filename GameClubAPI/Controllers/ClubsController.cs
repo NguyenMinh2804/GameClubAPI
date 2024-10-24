@@ -22,7 +22,7 @@ namespace GameClubAPI.Controllers
             if (ModelState.IsValid)
             {
                 if (await clubService.GetClubByName(club.Name) != null)
-                    return Conflict("Club with the same name already exists.");
+                    return Conflict($"Club with the name {club.Name} already exists.");
                 await clubService.CreateClub(club);
                 return Created("Name", club.Name);
             }
@@ -41,13 +41,18 @@ namespace GameClubAPI.Controllers
         public async Task<IActionResult> CreateEvent(int id, [FromBody] Event newEvent)
         {
 
-            if (await clubService.GetClubById(id) == null)
+            if (ModelState.IsValid)
             {
-                return NotFound("Club not found");
+                if (await clubService.GetClubById(id) == null)
+                {
+                    return NotFound("Club not found");
+                }
+                newEvent.ClubId = id;
+                await clubService.CreateEvent(newEvent);
+                return Created("New Event", newEvent.Title);
             }
-            newEvent.ClubId = id;
-            await clubService.CreateEvent(newEvent);
-            return Created("New Event", newEvent.Title);
+            return BadRequest(ModelState);
+
         }
 
         [HttpGet("clubs/{id}/events")]
